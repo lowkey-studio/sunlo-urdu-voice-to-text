@@ -104,7 +104,7 @@ async function transcribe(req, env, ctx, meta) {
   }
   const used = real / 60 * WHISPER_NEURONS_PER_MIN + llmNeurons;
   ctx.waitUntil(env.DB.prepare('UPDATE budget SET neurons=neurons+?, seconds=seconds+? WHERE day=?').bind(used - est, real - claimed, d).run().catch(() => {}));
-  ctx.waitUntil(logEvent(env, { ...ev, seconds: real, ok: urdu ? 1 : 0, ms: Date.now() - t0, neurons: used, detail: [ev.detail, pro ? 'pro' : '', urdu ? (roman ? '' : 'no_roman') : 'no_speech'].filter(Boolean).join(' ') }));
+  ctx.waitUntil(logEvent(env, { ...ev, seconds: real, ok: urdu ? 1 : 0, ms: Date.now() - t0, neurons: used, detail: [ev.detail, pro ? 'pro' : '', urdu ? (asrOnly ? 'asr_only' : (roman ? '' : 'no_roman')) : 'no_speech'].filter(Boolean).join(' ') }));
   if (!urdu) return J(req, { error: 'no_speech', msg: 'Is note mein koi baat sunai nahin di.' }, 422);
   return J(req, { urdu, roman, english, seconds: Math.round(real * 10) / 10 });
 }
