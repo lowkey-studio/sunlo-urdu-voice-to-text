@@ -62,11 +62,13 @@ async function logEvent(env, e) {
 async function transcribe(req, env, ctx, meta) {
   const buf = new Uint8Array(await req.arrayBuffer());
   const mime = (req.headers.get('Content-Type') || '').slice(0, 40);
-  const claimed = Math.max(1, Math.min(3600, parseFloat(req.headers.get('X-Duration')) || buf.length / 4000));
+  const hdrDur = parseFloat(req.headers.get('X-Duration'));
+  // without a duration from the browser (file it could not decode), guess from size at ~128 kbit/s and let the size cap protect the budget
+  const claimed = Math.max(1, Math.min(3600, hdrDur || Math.min(MAX_SECONDS, buf.length / 16000)));
   const part = (req.headers.get('X-Part') || '').replace(/[^0-9/]/g, '').slice(0, 7);
   const ev = { ...meta, kind: 'transcribe', bytes: buf.length, mime, seconds: claimed, detail: part ? 'part ' + part : '' };
   if (buf.length < 500) return J(req, { error: 'empty', msg: 'Audio file khaali hai.' }, 400);
-  if (buf.length > MAX_BYTES || claimed > MAX_SECONDS + 5) { ctx.waitUntil(logEvent(env, { ...ev, ok: 0, detail: 'too_long' })); return J(req, { error: 'too_long', msg: 'Muft version mein 5 minute tak ka note. Lamba note chhote hisson mein bhejein.' }, 413); }
+  if (buf.length > MAX_BYTES || claimed > MAX_SECONDS + 5) { ctx.waitUntil(logEvent(env, { ...ev, ok: 0, detail: 'too_long' })); return J(req, { error: 'too_long', msg: 'Yeh file is phone par tukron mein nahin kaati ja saki. 5 minute se chhoti file bhejein, ya Chrome mein koshish karein.' }, 413); }
   const d = day();
   const asrOnly = req.headers.get('X-Asr-Only') === '1';
   const est = claimed / 60 * WHISPER_NEURONS_PER_MIN + (asrOnly ? 0 : LLM_NEURON_EST);
