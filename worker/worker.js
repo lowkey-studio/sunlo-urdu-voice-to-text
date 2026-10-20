@@ -85,7 +85,9 @@ async function transcribe(req, env, ctx, meta) {
   const t0 = Date.now();
   let w;
   try {
-    w = await env.AI.run(WHISPER, { audio: b64(buf), language: 'ur', task: 'transcribe', vad_filter: true });
+    const opts = { audio: b64(buf), language: 'ur', task: 'transcribe', vad_filter: true };
+    if (meta.test && req.headers.get('X-Prompt')) opts.initial_prompt = decodeURIComponent(req.headers.get('X-Prompt')).slice(0, 400); // experiments only
+    w = await env.AI.run(WHISPER, opts);
   } catch (e) {
     ctx.waitUntil(logEvent(env, { ...ev, ok: 0, ms: Date.now() - t0, detail: 'whisper:' + String(e).slice(0, 120) }));
     return J(req, { error: 'asr_failed', msg: 'Is file ko parha nahin ja saka. WhatsApp se note dobara share karein ya MP3/M4A/OGG file chunein.' }, 502);
