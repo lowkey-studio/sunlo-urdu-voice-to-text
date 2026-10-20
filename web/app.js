@@ -82,7 +82,8 @@
       if (parts.length > 1) say('<span class="loading">Lambi recording: hissa ' + (q + 1) + ' / ' + parts.length + ' parha ja raha hai…</span>');
       var headers = H({ 'Content-Type': parts[q].type });
       if (parts[q].dur) headers['X-Duration'] = String(Math.round(parts[q].dur * 10) / 10);
-      if (parts.length > 1) { headers['X-Part'] = (q + 1) + '/' + parts.length; headers['X-Asr-Only'] = '1'; }
+      headers['X-Asr-Only'] = '1';  // Urdu first; Roman Urdu and English follow in one /api/translate call
+      if (parts.length > 1) headers['X-Part'] = (q + 1) + '/' + parts.length;
       try {
         var r = await fetch(API + '/api/transcribe', { method: 'POST', headers: headers, body: parts[q].body });
         var j = await r.json();
@@ -91,8 +92,9 @@
       } catch (e) { form.removeAttribute('aria-busy'); say('Internet ka masla lagta hai. Dobara koshish karein.', 'warn'); if (q) show(join(out)); return; }
     }
     var res = join(out);
-    if (parts.length > 1 && res.urdu) {
-      say('<span class="loading">Roman Urdu aur English tayar ho rahe hain…</span>');
+    if (res.urdu) {
+      show(res);
+      say('<span class="loading">Urdu tayar hai. Roman Urdu aur English tayar ho rahe hain…</span>');
       try { var tr = await fetch(API + '/api/translate', { method: 'POST', headers: H(), body: JSON.stringify({ text: res.urdu }) }); var tj = await tr.json(); res.roman = tj.roman || ''; res.english = tj.english || ''; if (!tr.ok && tj.msg) { say(esc(tj.msg), 'warn'); form.removeAttribute('aria-busy'); show(res); return; } } catch (e) {}
     }
     form.removeAttribute('aria-busy'); say(''); show(res);
