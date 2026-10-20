@@ -124,12 +124,14 @@
       (navigator.share ? '<button class="btn btn-secondary" type="button" id="sh">Share</button>' : '') +
       '<button class="btn btn-secondary" type="button" id="dl">.txt download</button>' +
       '<button class="btn btn-ghost" type="button" id="again">Ek aur note</button></div>' +
+      '<p class="small no-print">Ghar walon ya dosto ko bhi Urdu voice notes parhne mein mushkil hoti hai? <a id="tell" target="_blank" rel="noopener" href="https://wa.me/?text=' + encodeURIComponent('Urdu voice note sun nahin sakte? Yahan daalo, Urdu, Roman Urdu aur English mein likh deta hai. Free: ' + SITE + '/?src=tell') + '">Unhein Sunlo ka link WhatsApp par bhejein</a>.</p>' +
       '<div class="fb no-print" id="fb"><p class="small">Kya yeh transcript theek tha? Aap ka jawab tool behtar banata hai.</p><div class="choice">' +
       '<button class="btn btn-secondary btn-sm" type="button" data-rate="good">Haan, theek tha</button>' +
       '<button class="btn btn-secondary btn-sm" type="button" data-rate="some">Kuch ghaltiyan</button>' +
       '<button class="btn btn-secondary btn-sm" type="button" data-rate="bad">Bilkul ghalat</button></div></div>';
     result.innerHTML = h;
     $('wa').onclick = function () { ev('share_whatsapp'); };
+    $('tell').onclick = function () { ev('share_tool'); };
     if ($('sh')) $('sh').onclick = function () { ev('share_native'); navigator.share({ text: shareText() }).catch(function () {}); };
     $('dl').onclick = function () { ev('download'); var a = document.createElement('a'); a.href = URL.createObjectURL(new Blob([shareText()], { type: 'text/plain;charset=utf-8' })); a.download = 'sunlo-voice-note.txt'; a.click(); };
     $('again').onclick = function () { result.innerHTML = ''; fileIn.value = ''; fileIn.click(); };
