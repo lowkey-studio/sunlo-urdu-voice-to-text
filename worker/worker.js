@@ -204,7 +204,7 @@ async function signup(req, env, meta) {
 async function confirm(req, env, url) {
   const t = url.searchParams.get('t') || '';
   if (/^[a-f0-9]{32}$/.test(t)) await env.DB.prepare('UPDATE signups SET confirmed_ts=COALESCE(confirmed_ts,?) WHERE token=?').bind(now(), t).run();
-  return Response.redirect('https://sunlo.appin60.com/confirmed.html', 302);
+  return Response.redirect('https://sunlo.appin60.com/confirmed', 302);
 }
 
 async function feedback(req, env, meta) {
