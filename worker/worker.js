@@ -222,7 +222,21 @@ async function stats(req, env) {
   return J(req, { note: 'Transcriptions by real visitors (own tests and bots excluded). No audio or text is stored.', by_day: r.results, events: s.results, confirmed_signups: c?.n || 0 });
 }
 
+// Retention: raw usage events older than 30 days are rolled into daily counts, then deleted. Runs daily (cron).
+async function retention(env) {
+  const cutoff = new Date(Date.now() - 30 * 864e5).toISOString();
+  await env.DB.batch([
+    env.DB.prepare(`INSERT INTO daily_counts (day, kind, country, ua, test, n, ok, seconds)
+      SELECT substr(ts,1,10), kind, COALESCE(country,''), COALESCE(ua,''), test, COUNT(*), COALESCE(SUM(ok),0), COALESCE(SUM(seconds),0) FROM events WHERE ts < ?
+      GROUP BY 1,2,3,4,5
+      ON CONFLICT(day, kind, country, ua, test) DO UPDATE SET n=n+excluded.n, ok=ok+excluded.ok, seconds=seconds+excluded.seconds`).bind(cutoff),
+    env.DB.prepare('DELETE FROM events WHERE ts < ?').bind(cutoff),
+    env.DB.prepare('DELETE FROM visitor WHERE day < ?').bind(cutoff.slice(0, 10)),
+  ]);
+}
+
 export default {
+  async scheduled(event, env, ctx) { ctx.waitUntil(retention(env)); },
   async fetch(req, env, ctx) {
     const url = new URL(req.url);
     if (req.method === 'OPTIONS') return new Response(null, { headers: cors(req) });

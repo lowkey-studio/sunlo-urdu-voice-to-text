@@ -1,4 +1,4 @@
-// Sunlo browser app. Audio goes to the Sunlo API only to be transcribed; nothing is stored.
+// Sunlo browser app. Audio goes to the Sunlo API only to be transcribed; audio and text are not stored, only usage counts.
 (function () {
   var API = 'https://sunlo-api.appin60.com';
   try { API = localStorage.getItem('sunlo_api') || API; } catch (e) {}

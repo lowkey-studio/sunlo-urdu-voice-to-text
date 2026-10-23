@@ -14,7 +14,7 @@ This repository is the source of the running service, published so anyone can ch
 
 1. The browser decodes the file. Notes under about 3 MB are sent as they are; longer recordings are resampled to 16 kHz mono and cut into ~150-second pieces at the quietest moment near each boundary (`web/app.js`).
 2. The Cloudflare Worker (`worker/worker.js`) passes the audio to Whisper large-v3-turbo on Cloudflare Workers AI with `language: 'ur'`, then sends the Urdu text to Llama 4 Scout for Roman Urdu and English.
-3. The audio and the text are returned to you and not stored. The Worker writes only counters and metadata to its database: time, duration, size, file type, country, a device class, a salted daily hash of the IP for per-visitor limits, timing and success. Search the code for `INSERT INTO` to see every write.
+3. The audio and the text are returned to you and not stored. The Worker writes only counters and metadata to its database: time, duration, size, file type, country, a device class, a salted daily hash of the IP for per-visitor limits, timing and success. A daily cron rolls these rows into per-day counts after 30 days and deletes them. Search the code for `INSERT INTO` to see every write.
 
 Limits: a hard daily budget below the Workers AI free allocation, 10 minutes per file and 30 minutes a day per visitor for free use. A $4 pass (30 days) allows files up to 60 minutes; the free version stays free.
 
