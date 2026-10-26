@@ -1,8 +1,8 @@
 // Sunlo browser app. Audio goes to the Sunlo API only to be transcribed; audio and text are not stored, only usage counts.
 (function () {
-  var API = 'https://sunlo-api.appin60.com';
+  var API = 'https://sunlo-api.lfglabs.ai';
   try { API = localStorage.getItem('sunlo_api') || API; } catch (e) {}
-  var SITE = 'https://sunlo.appin60.com';
+  var SITE = 'https://sunlo.lfglabs.ai';
   var MAX_SEC = 600, CHUNK = 150;
   try { CHUNK = parseFloat(localStorage.getItem('sunlo_chunk')) || CHUNK; } catch (e) {}
   var $ = function (id) { return document.getElementById(id); };

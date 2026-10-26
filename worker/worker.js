@@ -12,7 +12,7 @@ const MAX_SECONDS = 300;            // free notes up to 5 minutes
 const MAX_BYTES = 12 * 1024 * 1024;
 const PER_VISITOR_DAILY = 40;        // requests (a long file is several chunks)
 const PER_VISITOR_SECONDS = 1800;   // 30 minutes of audio per visitor per day
-const ORIGINS = ['https://sunlo.appin60.com'];
+const ORIGINS = ['https://sunlo.lfglabs.ai', 'https://sunlo.appin60.com'];
 
 const SYS = `You receive an Urdu transcript of a voice note, made by speech recognition, so it may contain small spelling errors and English words written in Urdu script.
 Reply with JSON only, exactly: {"roman": "...", "english": "..."}
@@ -204,7 +204,7 @@ async function signup(req, env, meta) {
 async function confirm(req, env, url) {
   const t = url.searchParams.get('t') || '';
   if (/^[a-f0-9]{32}$/.test(t)) await env.DB.prepare('UPDATE signups SET confirmed_ts=COALESCE(confirmed_ts,?) WHERE token=?').bind(now(), t).run();
-  return Response.redirect('https://sunlo.appin60.com/confirmed', 302);
+  return Response.redirect('https://sunlo.lfglabs.ai/confirmed', 302);
 }
 
 async function feedback(req, env, meta) {

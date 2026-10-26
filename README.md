@@ -1,6 +1,6 @@
 # Sunlo: Urdu voice notes to Urdu, Roman Urdu and English text
 
-**Use it:** https://sunlo.appin60.com (free, no signup)
+**Use it:** https://sunlo.lfglabs.ai (free, no signup)
 
 Sunlo turns Urdu voice notes and recordings (WhatsApp `.opus`, `.m4a`, `.mp3`, `.wav`) into:
 
@@ -20,7 +20,7 @@ Limits: a hard daily budget below the Workers AI free allocation, 10 minutes per
 
 ## Accuracy
 
-`eval/` holds the test: the first 30 clips of the FLEURS Urdu (ur_pk) test split, 28 downloaded, encoded as Opus and sent through the live API. Word error rate 20.8% on clean clips, 23.0% with white noise at 15 dB SNR (`eval/eval_clean.json`, `eval/eval_noise15.json`, `eval/wer.py`). Real voice notes are harder than read sentences. One recognition slip can change the English badly, so check money, medicine, addresses and times against the audio. Details: https://sunlo.appin60.com/accuracy.html
+`eval/` holds the test: the first 30 clips of the FLEURS Urdu (ur_pk) test split, 28 downloaded, encoded as Opus and sent through the live API. Word error rate 20.8% on clean clips, 23.0% with white noise at 15 dB SNR (`eval/eval_clean.json`, `eval/eval_noise15.json`, `eval/wer.py`). Real voice notes are harder than read sentences. One recognition slip can change the English badly, so check money, medicine, addresses and times against the audio. Details: https://sunlo.lfglabs.ai/accuracy
 
 ## Install on Android
 
@@ -30,6 +30,6 @@ Open the site in Chrome, menu, "Install app". Sunlo then appears in WhatsApp's S
 
 sunlo@appin60.com
 
-Sunlo is independent and has no link to WhatsApp or Meta.
+Sunlo is made by LFG Labs (https://lfglabs.ai) and has no link to WhatsApp or Meta.
 
 Licence: MIT for the code in this repository. FLEURS transcripts in `eval/` are CC BY 4.0 (Google).
