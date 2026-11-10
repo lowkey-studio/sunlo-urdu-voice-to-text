@@ -216,10 +216,44 @@ async function feedback(req, env, meta) {
 }
 
 async function stats(req, env) {
-  const r = await env.DB.prepare("SELECT substr(ts,1,10) day, COUNT(*) runs, SUM(ok) ok, COUNT(DISTINCT vid) visitors, ROUND(SUM(CASE WHEN ok=1 THEN seconds ELSE 0 END)/60.0,1) minutes FROM events WHERE kind='transcribe' AND test=0 AND ua!='bot' GROUP BY 1 ORDER BY 1").all();
-  const s = await env.DB.prepare("SELECT kind, COUNT(*) n FROM events WHERE kind!='transcribe' AND test=0 GROUP BY 1").all();
-  const c = await env.DB.prepare("SELECT COUNT(*) n FROM signups WHERE confirmed_ts IS NOT NULL AND test=0").first();
-  return J(req, { note: 'Transcriptions by real visitors (own tests and bots excluded). No audio or text is stored.', by_day: r.results, events: s.results, confirmed_signups: c?.n || 0 });
+  // Browser runs: transcriptions whose visitor id also loaded a Sunlo page that day in a browser (not a bot user agent).
+  // Ids are a daily hash of the address, so this is a filter for scripted bursts like 5 Nov 2026, not proof. It misses a
+  // visitor whose address changes between page load and transcription or who crosses midnight UTC, and it lets a script
+  // through when it shares an address (carrier NAT, VPN) with a real visitor that day or sends its own page view.
+  // runs counts transcription requests, as by_day does: a long file is cut into parts and each part is one run.
+  // share_runs and share_visitors: that visitor arrived that day through a shared link (?src=wa, copy or tell).
+  // Arrivals: page views that did not come from another Sunlo page. Raw sources stay private; the public list maps them to
+  // our own tags and a few named search and answer engines, and everything else is 'other'. A reload counts as another
+  // view, so visitors (distinct daily ids) is the steadier number.
+  // Both cover the last 29 whole days plus today so far: retention deletes detailed rows older than 30 days, so the 30th
+  // day back would be partial and is left out.
+  const SRC = `CASE WHEN LOWER(COALESCE(detail,''))='' THEN 'direct'
+      WHEN LOWER(detail) IN ('wa','copy','tell','share-target') THEN LOWER(detail)
+      WHEN LOWER(detail) LIKE '%chatgpt.com' OR LOWER(detail) LIKE '%openai.com' OR LOWER(detail)='chatgpt' THEN 'chatgpt.com'
+      WHEN LOWER(detail) LIKE '%perplexity.ai' OR LOWER(detail)='perplexity' THEN 'perplexity.ai'
+      WHEN LOWER(detail) LIKE '%bing.com' THEN 'bing.com'
+      WHEN LOWER(detail) LIKE 'google.%' OR LOWER(detail) LIKE 'www.google.%' OR LOWER(detail)='google'
+        OR LOWER(detail)='com.google.android.googlequicksearchbox' THEN 'google'
+      WHEN LOWER(detail) LIKE '%duckduckgo.com' THEN 'duckduckgo.com'
+      WHEN LOWER(detail) LIKE '%yahoo.com' THEN 'yahoo.com'
+      WHEN LOWER(detail) LIKE '%whatsapp.com' THEN 'whatsapp.com'
+      ELSE 'other' END`;
+  const [r, s, c, b, a] = await env.DB.batch([
+    env.DB.prepare("SELECT substr(ts,1,10) day, COUNT(*) runs, SUM(ok) ok, COUNT(DISTINCT vid) visitors, ROUND(SUM(CASE WHEN ok=1 THEN seconds ELSE 0 END)/60.0,1) minutes FROM events WHERE kind='transcribe' AND test=0 AND ua!='bot' GROUP BY 1 ORDER BY 1"),
+    env.DB.prepare("SELECT kind, COUNT(*) n FROM events WHERE kind!='transcribe' AND test=0 GROUP BY 1"),
+    env.DB.prepare("SELECT COUNT(*) n FROM signups WHERE confirmed_ts IS NOT NULL AND test=0"),
+    env.DB.prepare(`WITH v AS (SELECT substr(ts,1,10) d, vid, MAX(LOWER(COALESCE(detail,'')) IN ('wa','copy','tell')) share
+        FROM events WHERE kind='ev_view' AND test=0 AND ua!='bot' GROUP BY 1,2)
+      SELECT substr(t.ts,1,10) day, COUNT(*) runs, SUM(t.ok) ok, COUNT(DISTINCT t.vid) visitors,
+        SUM(v.share) share_runs, COUNT(DISTINCT CASE WHEN v.share=1 THEN t.vid END) share_visitors
+      FROM events t JOIN v ON v.d=substr(t.ts,1,10) AND v.vid=t.vid
+      WHERE t.kind='transcribe' AND t.test=0 AND t.ua!='bot' AND t.ts >= date('now','-29 days') GROUP BY 1 ORDER BY 1`),
+    env.DB.prepare(`SELECT substr(ts,1,10) day, ${SRC} source, COUNT(*) views, COUNT(DISTINCT vid) visitors
+      FROM events WHERE kind='ev_view' AND test=0 AND ua!='bot' AND COALESCE(detail,'')!='internal' AND ts >= date('now','-29 days')
+      GROUP BY 1,2 ORDER BY 1,2`),
+  ]);
+  return J(req, { note: 'Transcriptions by real visitors (own tests and bots excluded). No audio or text is stored. browser_by_day and arrivals_by_day cover the last 29 whole days plus today so far; browser_by_day filters out scripted bursts with no page view, so treat it as an estimate.',
+    by_day: r.results, browser_by_day: b.results, arrivals_by_day: a.results, events: s.results, confirmed_signups: c.results?.[0]?.n || 0 });
 }
 
 // Retention: raw usage events older than 30 days are rolled into daily counts, then deleted. Runs daily (cron).
@@ -253,7 +287,7 @@ export default {
       if (url.pathname === '/api/confirm') return await confirm(req, env, url);
       if (url.pathname === '/api/feedback' && req.method === 'POST') return await feedback(req, env, meta);
       if (url.pathname === '/api/event' && req.method === 'POST') {
-        let k = '', rf = ''; try { const j = await req.json(); k = String(j.kind || '').replace(/[^a-z_]/g, '').slice(0, 24); rf = String(j.ref || '').replace(/[^a-z0-9.-]/gi, '').slice(0, 60); } catch {}
+        let k = '', rf = ''; try { const j = await req.json(); k = String(j.kind || '').replace(/[^a-z_]/g, '').slice(0, 24); rf = String(j.ref || '').toLowerCase().replace(/[^a-z0-9._-]/g, '').slice(0, 60); } catch {}
         if (k) ctx.waitUntil(logEvent(env, { ...meta, kind: 'ev_' + k, detail: rf }));
         return J(req, { ok: true });
       }

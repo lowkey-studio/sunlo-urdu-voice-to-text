@@ -7,8 +7,19 @@
   try { CHUNK = parseFloat(localStorage.getItem('sunlo_chunk')) || CHUNK; } catch (e) {}
   var $ = function (id) { return document.getElementById(id); };
   var src0 = (document.body.getAttribute('data-page') || 'home');
+  // Where a visit came from: our own share tag (?src=wa, copy, tell), else utm_source (ChatGPT adds utm_source=chatgpt.com),
+  // else 'share-target' for a note shared into the installed app (lands on /?shared=1), else the referrer's host.
   try { var rh = document.referrer ? new URL(document.referrer).hostname : ''; if (rh === location.hostname) rh = 'internal'; var tk0 = localStorage.getItem('sunlo_test');
-    fetch(API + '/api/event', { method: 'POST', headers: Object.assign({ 'Content-Type': 'application/json', 'X-Src': src0 }, tk0 ? { 'X-Test': tk0 } : {}), body: JSON.stringify({ kind: 'view', ref: (new URLSearchParams(location.search).get('src') || rh) }) });
+    var qs0 = new URLSearchParams(location.search);
+    fetch(API + '/api/event', { method: 'POST', headers: Object.assign({ 'Content-Type': 'application/json', 'X-Src': src0 }, tk0 ? { 'X-Test': tk0 } : {}), body: JSON.stringify({ kind: 'view', ref: (qs0.get('src') || qs0.get('utm_source') || (qs0.has('shared') ? 'share-target' : rh)) }) });
+  } catch (e) {}
+  // The demo clip loops without sound. The markup has controls and no autoplay, so it still plays without JS. Here it
+  // starts on its own with the controls hidden, except for people who ask for less motion or to save data, or who
+  // arrive with a note shared into the app: they keep the poster, the finished result, and can press play.
+  try { var demo = document.querySelector('video.demo-video');
+    if (demo) { var cn = navigator.connection || {}, rm = window.matchMedia && matchMedia('(prefers-reduced-motion: reduce)').matches;
+      if (!(rm || cn.saveData || /(^|-)2g$/.test(cn.effectiveType || '') || new URLSearchParams(location.search).has('shared'))) {
+        demo.muted = true; demo.controls = false; demo.preload = 'auto'; var pl = demo.play(); if (pl && pl.catch) pl.catch(function () { demo.controls = true; }); } }
   } catch (e) {}
   var form = $('tool'); if (!form) return;
   var fileIn = $('file'), result = $('result'), status = $('status'), recBtn = $('rec'), last = null;
@@ -49,6 +60,7 @@
   }
 
   async function run(file) {
+    try { if (demo && !demo.paused) demo.pause(); } catch (e) {}  // the clip stops while their own note is transcribed
     if (!file) return;
     ev('pick');
     result.innerHTML = '';
