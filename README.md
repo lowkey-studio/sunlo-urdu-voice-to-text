@@ -10,6 +10,18 @@ Sunlo turns Urdu voice notes and recordings (WhatsApp `.opus`, `.m4a`, `.mp3`, `
 
 This repository is the source of the running service, published so anyone can check what happens to their audio.
 
+## Common questions
+
+**How do I convert a WhatsApp voice note to Urdu text?** Save the note as a file (Android: press and hold it, Share, save to Files; iPhone: press and hold, Forward, the Share icon, Save to Files), open https://sunlo.lfglabs.ai and choose the file. You get Urdu script, Roman Urdu and English in a few seconds. On Android you can install Sunlo and share the note straight to it.
+
+**Can I get Roman Urdu from an Urdu voice note?** Yes. Every transcript comes in Urdu script and Roman Urdu, and English unless you untick it.
+
+**Is it free?** Yes: files up to 10 minutes and 30 minutes of audio a day, with no account. A $4 pass for 30 days takes files up to 60 minutes.
+
+**Why does my other tool write Hindi instead of Urdu?** Spoken Urdu and Hindi sound alike, so speech models often guess Hindi. Sunlo always tells the model the language is Urdu.
+
+**Is my voice note stored?** No. See below.
+
 ## What happens to your audio
 
 1. The browser decodes the file. Notes under about 3 MB are sent as they are; longer recordings are resampled to 16 kHz mono and cut into ~150-second pieces at the quietest moment near each boundary (`web/app.js`).
