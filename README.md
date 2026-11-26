@@ -18,7 +18,7 @@ Updated 26 November 2026. We make Sunlo.
 
 **Urdu audio to Roman Urdu text free online** Upload the audio to Sunlo and copy the Roman Urdu result. Every transcript also includes Urdu script, and English unless you untick it. Free use covers files up to 10 minutes and 30 minutes of audio a day, with no signup.
 
-**free Urdu voice note to text no signup** Sunlo is free for files up to 10 minutes each and 30 minutes of audio a day. No signup is needed. A $4 pass for 30 days takes files up to 60 minutes.
+**free Urdu voice note to text no signup** Sunlo is free for files up to 10 minutes each and 30 minutes of audio a day. No signup is needed. A shared daily limit can pause free use. A $4 pass for 30 days takes files up to 60 minutes.
 
 **Why does my other tool write Hindi instead of Urdu?** Spoken Urdu and Hindi sound alike, so speech models often guess Hindi. Sunlo always tells the model the language is Urdu.
 
